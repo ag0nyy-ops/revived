@@ -56,52 +56,55 @@ func Markdown(w io.Writer, releases []Release, o MarkdownOptions) error {
 		known[s.Type] = true
 	}
 	for _, r := range releases {
-		if r.Unreleased && r.Tag == "" && len(r.Commits) == 0 {
-			continue
+		body := releaseBody(r, o, known)
+		if body == "" {
+			if r.Unreleased && r.Tag == "" {
+				continue // nothing to say and no version to announce
+			}
+			body = "_No notable changes._\n\n"
 		}
 		writeHeading(&b, r, o.Links)
-
-		var breaking []commit.Commit
-		for _, c := range r.Commits {
-			if c.Breaking {
-				breaking = append(breaking, c)
-			}
-		}
-		wrote := false
-		if len(breaking) > 0 {
-			b.WriteString("### ⚠ BREAKING CHANGES\n\n")
-			for _, c := range breaking {
-				fmt.Fprintf(&b, "- %s%s\n", scopePrefix(c), indentNote(c.BreakingNote))
-			}
-			b.WriteString("\n")
-			wrote = true
-		}
-		for _, s := range o.Sections {
-			var lines []string
-			for _, c := range r.Commits {
-				t := c.Type
-				if s.Type == "" { // "Other" catches anything without a listed section
-					if known[t] && t != "" {
-						continue
-					}
-				} else if t != s.Type {
-					continue
-				}
-				lines = append(lines, commitLine(c, o.Links))
-			}
-			if len(lines) == 0 {
-				continue
-			}
-			fmt.Fprintf(&b, "### %s\n\n%s\n\n", s.Title, strings.Join(lines, "\n"))
-			wrote = true
-		}
-		if !wrote {
-			b.WriteString("_No notable changes._\n\n")
-		}
+		b.WriteString(body)
 	}
 	out := strings.TrimRight(b.String(), "\n") + "\n"
 	_, err := io.WriteString(w, out)
 	return err
+}
+
+// releaseBody renders the sections of one release, or "" if none apply.
+func releaseBody(r Release, o MarkdownOptions, known map[string]bool) string {
+	var b strings.Builder
+	var breaking []commit.Commit
+	for _, c := range r.Commits {
+		if c.Breaking {
+			breaking = append(breaking, c)
+		}
+	}
+	if len(breaking) > 0 {
+		b.WriteString("### ⚠ BREAKING CHANGES\n\n")
+		for _, c := range breaking {
+			fmt.Fprintf(&b, "- %s%s\n", scopePrefix(c), indentNote(c.BreakingNote))
+		}
+		b.WriteString("\n")
+	}
+	for _, s := range o.Sections {
+		var lines []string
+		for _, c := range r.Commits {
+			t := c.Type
+			if s.Type == "" { // "Other" catches anything without a listed section
+				if known[t] && t != "" {
+					continue
+				}
+			} else if t != s.Type {
+				continue
+			}
+			lines = append(lines, commitLine(c, o.Links))
+		}
+		if len(lines) > 0 {
+			fmt.Fprintf(&b, "### %s\n\n%s\n\n", s.Title, strings.Join(lines, "\n"))
+		}
+	}
+	return b.String()
 }
 
 func writeHeading(b *strings.Builder, r Release, l gitlog.Links) {
