@@ -126,7 +126,7 @@ func splitFooters(rest string) (string, []Footer) {
 			continue
 		}
 		f := &footers[len(footers)-1]
-		f.Value = strings.TrimSpace(f.Value + "\n" + line)
+		f.Value = strings.TrimSpace(f.Value + "\n" + strings.TrimSpace(line))
 	}
 	body := strings.TrimSpace(strings.Join(paras[:len(paras)-1], "\n\n"))
 	return body, footers
