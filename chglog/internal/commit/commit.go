@@ -8,28 +8,30 @@ import (
 
 // Commit is one parsed commit.
 type Commit struct {
-	Hash    string
-	Author  string
-	Date    string // ISO 8601, as reported by git
-	Parents []string
+	Hash    string   `json:"hash"`
+	Author  string   `json:"author"`
+	Date    string   `json:"date"` // ISO 8601, as reported by git
+	Parents []string `json:"parents,omitempty"`
 
-	Type     string // lower-cased; empty when the header is not conventional
-	Scope    string
-	Subject  string
-	Body     string
-	Breaking bool
+	Header   string `json:"header"`         // first line of the message, as written
+	Type     string `json:"type,omitempty"` // lower-cased; empty when the header is not conventional
+	Scope    string `json:"scope,omitempty"`
+	Subject  string `json:"subject"`
+	Body     string `json:"body,omitempty"`
+	Breaking bool   `json:"breaking"`
 	// BreakingNote is the text of a BREAKING CHANGE footer, or the subject when
 	// only "!" marked the commit as breaking.
-	BreakingNote string
-	Footers      []Footer
-	Refs         []string // issue / PR numbers such as "12" from "Closes #12" or "(#12)"
-	Revert       bool
+	BreakingNote string   `json:"breaking_note,omitempty"`
+	Footers      []Footer `json:"footers,omitempty"`
+	Refs         []string `json:"refs,omitempty"` // issue / PR numbers such as "12" from "Closes #12" or "(#12)"
+	Revert       bool     `json:"revert,omitempty"`
+	RevertsHash  string   `json:"reverts,omitempty"` // from git's "This reverts commit <hash>." line, if present
 }
 
 // Footer is a "Token: value" or "Token #value" trailer.
 type Footer struct {
-	Token string
-	Value string
+	Token string `json:"token"`
+	Value string `json:"value"`
 }
 
 // IsMerge reports whether the commit has more than one parent.
@@ -39,10 +41,11 @@ func (c Commit) IsMerge() bool { return len(c.Parents) > 1 }
 func (c Commit) Conventional() bool { return c.Type != "" }
 
 var (
-	headerRe = regexp.MustCompile(`^(?P<type>[A-Za-z][\w-]*)(?:\((?P<scope>[^()\r\n]*)\))?(?P<bang>!)?: (?P<subject>.+)$`)
-	footerRe = regexp.MustCompile(`^(BREAKING CHANGE|BREAKING-CHANGE|[A-Za-z][\w-]*)(?:: | #)(.*)$`)
-	refRe    = regexp.MustCompile(`#(\d+)\b`)
-	revertRe = regexp.MustCompile(`^Revert "(.+)"$`)
+	headerRe  = regexp.MustCompile(`^(?P<type>[A-Za-z][\w-]*)(?:\((?P<scope>[^()\r\n]*)\))?(?P<bang>!)?: (?P<subject>.+)$`)
+	footerRe  = regexp.MustCompile(`^(BREAKING CHANGE|BREAKING-CHANGE|[A-Za-z][\w-]*)(?:: | #)(.*)$`)
+	refRe     = regexp.MustCompile(`#(\d+)\b`)
+	revertRe  = regexp.MustCompile(`^Revert "(.+)"$`)
+	revertsRe = regexp.MustCompile(`This reverts commit ([0-9a-f]{7,64})`)
 )
 
 // Parse fills the conventional fields of c from a raw commit message.
@@ -51,6 +54,7 @@ func Parse(c Commit, message string) Commit {
 	message = strings.TrimSpace(message)
 	header, rest, _ := strings.Cut(message, "\n")
 	header = strings.TrimSpace(header)
+	c.Header = header
 
 	if m := revertRe.FindStringSubmatch(header); m != nil {
 		c.Revert = true
@@ -78,6 +82,9 @@ func Parse(c Commit, message string) Commit {
 			c.Breaking = true
 			c.BreakingNote = f.Value
 		}
+	}
+	if m := revertsRe.FindStringSubmatch(rest); m != nil {
+		c.RevertsHash = m[1]
 	}
 	if c.Breaking && c.BreakingNote == "" {
 		c.BreakingNote = c.Subject
