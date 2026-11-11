@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
 	"github.com/ag0nyy-ops/revived/chglog/internal/commit"
@@ -139,28 +140,38 @@ func commitLine(c commit.Commit, l gitlog.Links) string {
 	if u := l.Commit(c.Hash); u != "" {
 		ref = fmt.Sprintf("[%s](%s)", short, u)
 	}
-	line := fmt.Sprintf("- %s%s (%s)", scopePrefix(c), c.Subject, ref)
-	if len(c.Refs) > 0 {
-		var refs []string
-		for _, n := range c.Refs {
-			if u := l.Issue(n); u != "" {
-				refs = append(refs, fmt.Sprintf("[#%s](%s)", n, u))
-			} else {
-				refs = append(refs, "#"+n)
+	subject := c.Subject
+	var extra []string
+	for _, n := range c.Refs {
+		tag := "#" + n
+		u := l.Issue(n)
+		if refPattern(n).MatchString(c.Subject) {
+			// Link refs already in the subject, e.g. "(#12)", instead of repeating them.
+			if u != "" {
+				subject = replaceRef(subject, n, fmt.Sprintf("[%s](%s)", tag, u))
 			}
+			continue
 		}
-		// Don't repeat refs already visible in the subject, e.g. "(#12)".
-		var extra []string
-		for i, n := range c.Refs {
-			if !strings.Contains(c.Subject, "#"+n) {
-				extra = append(extra, refs[i])
-			}
-		}
-		if len(extra) > 0 {
-			line += ", closes " + strings.Join(extra, ", ")
+		if u != "" {
+			extra = append(extra, fmt.Sprintf("[%s](%s)", tag, u))
+		} else {
+			extra = append(extra, tag)
 		}
 	}
+	line := fmt.Sprintf("- %s%s (%s)", scopePrefix(c), subject, ref)
+	if len(extra) > 0 {
+		line += ", closes " + strings.Join(extra, ", ")
+	}
 	return line
+}
+
+// refPattern matches a standalone "#n" (so "#1" doesn't match inside "#12").
+func refPattern(n string) *regexp.Regexp {
+	return regexp.MustCompile(`#` + regexp.QuoteMeta(n) + `\b`)
+}
+
+func replaceRef(s, n, link string) string {
+	return refPattern(n).ReplaceAllLiteralString(s, link)
 }
 
 // JSON writes releases as indented JSON.
