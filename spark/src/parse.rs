@@ -130,10 +130,7 @@ mod tests {
             parse_series("1,,3").unwrap(),
             vec![Some(1.0), None, Some(3.0)]
         );
-        assert_eq!(
-            parse_series("1,2,").unwrap(),
-            vec![Some(1.0), Some(2.0)]
-        );
+        assert_eq!(parse_series("1,2,").unwrap(), vec![Some(1.0), Some(2.0)]);
     }
 
     #[test]
