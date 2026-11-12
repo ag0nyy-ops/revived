@@ -50,19 +50,51 @@ pub fn parse_number(token: &str) -> Option<f64> {
     t.parse::<f64>().ok().filter(|v| v.is_finite())
 }
 
+/// Tokens that mean "no reading here". They render as a gap so a broken
+/// sensor or a missing day doesn't kill the whole sparkline.
+pub fn is_missing(token: &str) -> bool {
+    matches!(
+        token.trim().to_ascii_lowercase().as_str(),
+        "x" | "_" | "?" | "nan" | "na" | "n/a" | "null" | "none"
+    )
+}
+
 /// Splits text into tokens and parses each one.
+///
+/// Missing markers become `None`. Two commas in a row (`1,,3`) also count
+/// as a missing value, since that's how CSV exports leave holes.
 pub fn parse_series(text: &str) -> Result<Vec<Point>, ParseError> {
-    text.split(is_separator)
-        .filter(|t| !t.is_empty())
-        .enumerate()
-        .map(|(i, tok)| match parse_number(tok) {
-            Some(v) => Ok(Some(v)),
-            None => Err(ParseError {
-                token: tok.to_string(),
-                position: i,
-            }),
-        })
-        .collect()
+    let mut out = Vec::new();
+    for line in text.lines() {
+        // Within a line, an empty field between two commas is a hole.
+        // Whitespace around the commas is ignored.
+        let fields: Vec<&str> = line.split([',', ';']).collect();
+        let last = fields.len() - 1;
+        for (j, field) in fields.iter().enumerate() {
+            let field = field.trim();
+            if field.is_empty() {
+                // Only a hole when it sits between two separators, so a
+                // trailing comma ("1,2,") or a blank line adds nothing.
+                if j > 0 && j < last {
+                    out.push(None);
+                }
+                continue;
+            }
+            for tok in field.split(is_separator).filter(|t| !t.is_empty()) {
+                if is_missing(tok) {
+                    out.push(None);
+                } else if let Some(v) = parse_number(tok) {
+                    out.push(Some(v));
+                } else {
+                    return Err(ParseError {
+                        token: tok.to_string(),
+                        position: out.len(),
+                    });
+                }
+            }
+        }
+    }
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -80,7 +112,33 @@ mod tests {
     #[test]
     fn mixed_separators() {
         assert_eq!(vals("1 2,3;4\n5\t6"), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
-        assert_eq!(vals("1, 2 ,, 3"), vec![1.0, 2.0, 3.0]);
+        assert_eq!(vals("1, 2 , 3"), vec![1.0, 2.0, 3.0]);
+    }
+
+    #[test]
+    fn missing_markers_become_gaps() {
+        let s = parse_series("1 x 3 nan _ N/A 7").unwrap();
+        assert_eq!(
+            s,
+            vec![Some(1.0), None, Some(3.0), None, None, None, Some(7.0)]
+        );
+    }
+
+    #[test]
+    fn empty_csv_fields_are_gaps() {
+        assert_eq!(
+            parse_series("1,,3").unwrap(),
+            vec![Some(1.0), None, Some(3.0)]
+        );
+        assert_eq!(
+            parse_series("1,2,").unwrap(),
+            vec![Some(1.0), Some(2.0)]
+        );
+    }
+
+    #[test]
+    fn blank_lines_are_ignored() {
+        assert_eq!(vals("1\n\n2\n"), vec![1.0, 2.0]);
     }
 
     #[test]
