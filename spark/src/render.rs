@@ -62,6 +62,34 @@ pub fn line(fracs: &[Option<f64>], charset: Charset) -> String {
         .collect()
 }
 
+/// Renders normalized values as a chart `rows` lines tall.
+///
+/// Each column gets a height in eighths of a cell. Full cells are drawn
+/// with the tallest tick and the top cell of each column gets the partial
+/// block, so a 3-row chart has 24 distinct heights instead of 8.
+/// With `rows == 1` this is identical to [`line`].
+pub fn rows(fracs: &[Option<f64>], rows: usize, charset: Charset) -> Vec<String> {
+    let rows = rows.max(1);
+    let ticks = charset.ticks();
+    let steps = ticks.len();
+    let heights: Vec<Option<usize>> = fracs
+        .iter()
+        .map(|f| f.map(|f| quantize(f, rows * steps) + 1))
+        .collect();
+    (0..rows)
+        .map(|r| {
+            let base = (rows - 1 - r) * steps;
+            heights
+                .iter()
+                .map(|h| match h {
+                    Some(h) if *h > base => ticks[(h - base).min(steps) - 1],
+                    _ => GAP,
+                })
+                .collect()
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -84,6 +112,29 @@ mod tests {
     #[test]
     fn draws_ascii_line_with_gap() {
         assert_eq!(line(&[Some(0.0), None, Some(1.0)], Charset::Ascii), "_ #");
+    }
+
+    #[test]
+    fn one_row_matches_line() {
+        let fracs = [Some(0.0), Some(0.3), None, Some(0.7), Some(1.0)];
+        assert_eq!(
+            rows(&fracs, 1, Charset::Unicode),
+            vec![line(&fracs, Charset::Unicode)]
+        );
+    }
+
+    #[test]
+    fn two_rows_stack_blocks() {
+        let fracs = [Some(0.0), Some(0.5), Some(1.0), None];
+        assert_eq!(rows(&fracs, 2, Charset::Unicode), vec![" ▁█ ", "▁██ "]);
+    }
+
+    #[test]
+    fn three_rows_have_finer_steps() {
+        // 24 heights: 0.5 lands on height 13, a full bottom cell plus five
+        // eighths of the middle one.
+        let out = rows(&[Some(0.5)], 3, Charset::Unicode);
+        assert_eq!(out, vec![" ", "▅", "█"]);
     }
 
     #[test]
