@@ -4,3 +4,4 @@
 //! parse the input, map values to levels, then render levels to text.
 
 pub mod parse;
+pub mod scale;
