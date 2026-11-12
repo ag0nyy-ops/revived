@@ -90,6 +90,41 @@ pub fn rows(fracs: &[Option<f64>], rows: usize, charset: Charset) -> Vec<String>
         .collect()
 }
 
+/// ANSI color for a level: green for the bottom third, yellow for the
+/// middle, red for the top. Handy for load, latency or error counts.
+pub fn color_for(frac: f64) -> &'static str {
+    match quantize(frac, 3) {
+        0 => "\x1b[32m",
+        1 => "\x1b[33m",
+        _ => "\x1b[31m",
+    }
+}
+
+const RESET: &str = "\x1b[0m";
+
+/// Wraps every drawn cell of `lines` in the color for its column.
+///
+/// Gaps are left alone so they don't carry stray escape codes.
+pub fn paint(fracs: &[Option<f64>], lines: &[String]) -> Vec<String> {
+    lines
+        .iter()
+        .map(|line| {
+            let mut out = String::new();
+            for (c, f) in line.chars().zip(fracs) {
+                match f {
+                    Some(f) if c != GAP => {
+                        out.push_str(color_for(*f));
+                        out.push(c);
+                        out.push_str(RESET);
+                    }
+                    _ => out.push(c),
+                }
+            }
+            out
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -135,6 +170,20 @@ mod tests {
         // eighths of the middle one.
         let out = rows(&[Some(0.5)], 3, Charset::Unicode);
         assert_eq!(out, vec![" ", "▅", "█"]);
+    }
+
+    #[test]
+    fn paints_by_level_and_skips_gaps() {
+        let fracs = [Some(0.0), None, Some(0.5), Some(1.0)];
+        let out = paint(&fracs, &[line(&fracs, Charset::Ascii)]);
+        assert_eq!(out[0], "\x1b[32m_\x1b[0m \x1b[33m=\x1b[0m\x1b[31m#\x1b[0m");
+    }
+
+    #[test]
+    fn paint_leaves_empty_cells_of_tall_charts_plain() {
+        let fracs = [Some(0.0), Some(1.0)];
+        let out = paint(&fracs, &rows(&fracs, 2, Charset::Unicode));
+        assert_eq!(out[0], " \x1b[31m█\x1b[0m");
     }
 
     #[test]
