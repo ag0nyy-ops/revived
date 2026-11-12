@@ -10,11 +10,15 @@ pub struct Scale {
     pub min: Option<f64>,
     /// Fixed top of the scale. Values above it are clamped.
     pub max: Option<f64>,
+    /// Map values through log10 first, for data spanning orders of
+    /// magnitude (request counts, file sizes, latencies).
+    pub log: bool,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum ScaleError {
     MinAboveMax { min: f64, max: f64 },
+    NonPositiveForLog { value: f64 },
 }
 
 impl fmt::Display for ScaleError {
@@ -22,6 +26,9 @@ impl fmt::Display for ScaleError {
         match self {
             ScaleError::MinAboveMax { min, max } => {
                 write!(f, "--min ({min}) is greater than --max ({max})")
+            }
+            ScaleError::NonPositiveForLog { value } => {
+                write!(f, "--log needs values above zero, got {value}")
             }
         }
     }
@@ -42,12 +49,34 @@ pub fn bounds(points: &[Point]) -> Option<(f64, f64)> {
 /// When every value is the same there's no range to spread over, so
 /// everything lands in the middle rather than dividing by zero.
 pub fn normalize(points: &[Point], scale: &Scale) -> Result<Vec<Option<f64>>, ScaleError> {
+    let log = |v: f64| -> Result<f64, ScaleError> {
+        if v > 0.0 {
+            Ok(v.log10())
+        } else {
+            Err(ScaleError::NonPositiveForLog { value: v })
+        }
+    };
+    let mapped: Vec<Point>;
+    let (points, min, max) = if scale.log {
+        mapped = points
+            .iter()
+            .map(|p| p.map(log).transpose())
+            .collect::<Result<_, _>>()?;
+        (
+            mapped.as_slice(),
+            scale.min.map(log).transpose()?,
+            scale.max.map(log).transpose()?,
+        )
+    } else {
+        (points, scale.min, scale.max)
+    };
+
     let (data_lo, data_hi) = match bounds(points) {
         Some(b) => b,
         None => return Ok(points.iter().map(|_| None).collect()),
     };
-    let lo = scale.min.unwrap_or(data_lo);
-    let hi = scale.max.unwrap_or(data_hi);
+    let lo = min.unwrap_or(data_lo);
+    let hi = max.unwrap_or(data_hi);
     if lo > hi {
         return Err(ScaleError::MinAboveMax { min: lo, max: hi });
     }
@@ -101,12 +130,18 @@ mod tests {
     fn near_max_values_share_the_top_bar() {
         // 95 and 100 are in the same top slice of 0..100, so both get
         // the tallest bar instead of only the exact maximum.
-        assert_eq!(levels(&[0.0, 95.0, 100.0], &Scale::default()), vec![0, 7, 7]);
+        assert_eq!(
+            levels(&[0.0, 95.0, 100.0], &Scale::default()),
+            vec![0, 7, 7]
+        );
     }
 
     #[test]
     fn handles_negative_ranges() {
-        assert_eq!(levels(&[-10.0, 0.0, 10.0], &Scale::default()), vec![0, 4, 7]);
+        assert_eq!(
+            levels(&[-10.0, 0.0, 10.0], &Scale::default()),
+            vec![0, 4, 7]
+        );
     }
 
     #[test]
@@ -119,6 +154,7 @@ mod tests {
         let s = Scale {
             min: Some(0.0),
             max: Some(10.0),
+            ..Scale::default()
         };
         assert_eq!(levels(&[-5.0, 5.0, 50.0], &s), vec![0, 4, 7]);
     }
@@ -128,8 +164,35 @@ mod tests {
         let s = Scale {
             min: Some(10.0),
             max: Some(1.0),
+            ..Scale::default()
         };
         assert!(normalize(&some(&[1.0]), &s).is_err());
+    }
+
+    #[test]
+    fn log_scale_evens_out_magnitudes() {
+        let s = Scale {
+            log: true,
+            ..Scale::default()
+        };
+        // Linear would squash 1, 10 and 100 into the bottom bar.
+        assert_eq!(
+            levels(&[1.0, 10.0, 100.0, 1000.0], &Scale::default()),
+            vec![0, 0, 0, 7]
+        );
+        assert_eq!(levels(&[1.0, 10.0, 100.0, 1000.0], &s), vec![0, 2, 5, 7]);
+    }
+
+    #[test]
+    fn log_scale_rejects_zero_and_negatives() {
+        let s = Scale {
+            log: true,
+            ..Scale::default()
+        };
+        assert_eq!(
+            normalize(&some(&[1.0, 0.0]), &s),
+            Err(ScaleError::NonPositiveForLog { value: 0.0 })
+        );
     }
 
     #[test]
