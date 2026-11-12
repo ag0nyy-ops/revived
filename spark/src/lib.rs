@@ -3,6 +3,7 @@
 //! The library is split into small stages so each can be tested alone:
 //! parse the input, map values to levels, then render levels to text.
 
+pub mod cli;
 pub mod parse;
 pub mod render;
 pub mod resample;
