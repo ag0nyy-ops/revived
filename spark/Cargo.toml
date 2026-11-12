@@ -1,0 +1,13 @@
+[package]
+name = "spark"
+version = "0.1.0"
+edition = "2021"
+description = "Sparklines for your shell, rebuilt from holman/spark"
+license = "MIT"
+rust-version = "1.70"
+
+[dependencies]
+
+[profile.release]
+lto = true
+strip = true
