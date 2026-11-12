@@ -1,0 +1,4 @@
+/chglog
+/dist/
+*.test
+coverage.out
