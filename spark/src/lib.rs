@@ -7,3 +7,4 @@ pub mod parse;
 pub mod render;
 pub mod resample;
 pub mod scale;
+pub mod stats;
