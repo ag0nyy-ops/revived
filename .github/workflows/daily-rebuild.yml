@@ -24,9 +24,9 @@ jobs:
     timeout-minutes: 90
     env:
       GIT_AUTHOR_NAME: Jaymz
-      GIT_AUTHOR_EMAIL: ag0nyy@icloud.com
+      GIT_AUTHOR_EMAIL: 253701092+ag0nyy-ops@users.noreply.github.com
       GIT_COMMITTER_NAME: Jaymz
-      GIT_COMMITTER_EMAIL: ag0nyy@icloud.com
+      GIT_COMMITTER_EMAIL: 253701092+ag0nyy-ops@users.noreply.github.com
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
       - name: set commit identity
         run: |
           git config user.name "Jaymz"
-          git config user.email "ag0nyy@icloud.com"
+          git config user.email "253701092+ag0nyy-ops@users.noreply.github.com"
 
       - uses: anthropics/claude-code-action@v1
         with:
