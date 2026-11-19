@@ -1,0 +1,75 @@
+name: daily rebuild
+
+on:
+  schedule:
+    # 11:47am, 4:47pm, 8:47pm Chicago during CST (UTC-6). github can run these a bit late.
+    - cron: '47 17 * * *'
+    - cron: '47 22 * * *'
+    - cron: '47 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: daily-rebuild
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GIT_AUTHOR_NAME: Jaymz
+      GIT_AUTHOR_EMAIL: ag0nyy@icloud.com
+      GIT_COMMITTER_NAME: Jaymz
+      GIT_COMMITTER_EMAIL: ag0nyy@icloud.com
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: set commit identity
+        run: |
+          git config user.name "Jaymz"
+          git config user.email "ag0nyy@icloud.com"
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          settings: '{"includeCoAuthoredBy": false, "attribution": {"commit": "", "pr": ""}}'
+          claude_args: >-
+            --max-turns 250
+            --allowedTools "Bash,Read,Edit,Write,Glob,Grep,WebSearch,WebFetch"
+          prompt: |
+            You are working in a checkout of ag0nyy-ops/revived. Each folder at the repo root is a
+            from-scratch rebuild of an archived or abandoned open-source tool. Your job this run:
+            ship ONE new rebuild as a pull request. Never merge anything and never push to main.
+
+            0. Housekeeping: run `gh pr list --state open --json number,headRefName,mergeable`.
+               If 3 or more rebuild PRs are already open, stop and do nothing else this run.
+               If an open rebuild PR conflicts with main (usually the root README table), check out
+               its branch, merge origin/main into it, keep both table rows, commit, push.
+            1. Read README.md and the folder names (and open PR branches) so you don't repeat a tool.
+            2. Find ONE archived or clearly abandoned small open-source tool on GitHub with a
+               permissive license (MIT, Apache-2.0, BSD, ISC, Unlicense). Skip GPL/AGPL/no license.
+               It must be buildable in one session. Vary languages and kinds of tools over time.
+            3. Open one issue for the rebuild (checklist of improvements) and 2 to 4 smaller issues for
+               concrete bugs or gaps the original had.
+            4. On a new branch named after the tool, rebuild it from scratch in your own code (do not
+               copy source) in a folder named after the tool. Make it genuinely better: modern runtime,
+               known issues fixed, cleaner CLI, real tests. Run the tests and make them pass.
+            5. Folder README: original name, link, license and attribution, why it died, what's
+               improved, usage. Add a row to the root README table.
+            6. Make 8 to 15 small, real, descriptive commits (scaffold, modules, fixes, tests, docs),
+               referencing issues with "fixes #N" where it fits. No empty, whitespace-only or padding
+               commits. Use the git identity already configured; do not add Co-authored-by trailers
+               or any mention of an AI or assistant in commits, issues, PR text or code comments.
+            7. Push the branch and open a PR titled "<tool>: rebuilt <original owner/name>" that
+               references the issues. Do not merge it.
+            Never touch other repositories, never create secrets, never change repository settings.
