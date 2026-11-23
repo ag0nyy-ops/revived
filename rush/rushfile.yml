@@ -1,0 +1,10 @@
+# Example rushfile. Run `rush --list` or `rush test`.
+test: |
+    python3 -m unittest discover -s tests -t .
+
+build: |
+    @test
+    python3 -m pip wheel . --no-deps -w dist
+
+#clean: |
+    rm -rf dist build
