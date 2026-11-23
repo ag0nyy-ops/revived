@@ -69,3 +69,22 @@ def header_block(msg):
     if not rows:
         return ""
     return "<table class=\"eml-headers\">" + "".join(rows) + "</table><hr>"
+
+
+def convert(msg, with_headers=False):
+    """Full conversion: returns an HTML string for an EmailMessage."""
+    body = inline_cids(body_html(msg), msg)
+    if with_headers:
+        head = header_block(msg)
+        low = body.lower()
+        i = low.find("<body")
+        if i != -1:
+            j = low.find(">", i)
+            return body[: j + 1] + head + body[j + 1:]
+        return head + body
+    return body
+
+
+def parse_bytes(data):
+    from email import message_from_bytes
+    return message_from_bytes(data, policy=policy.default)
