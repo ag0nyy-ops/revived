@@ -12,7 +12,7 @@ def _body_part(msg, kind):
         return None
     try:
         return part.get_content()
-    except (LookupError, UnicodeError):
+    except (LookupError, UnicodeError, AttributeError):
         raw = part.get_payload(decode=True) or b""
         return raw.decode("utf-8", errors="replace")
 
