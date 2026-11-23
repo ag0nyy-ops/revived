@@ -11,7 +11,7 @@ ok: |
     echo ok-ran > out.txt
 use: |
     @ok
-    cat out.txt >> out.txt
+    cp out.txt copy.txt
 bad: |
     exit 3
 after: |
@@ -53,7 +53,7 @@ class CliTests(unittest.TestCase):
     def test_runs_in_rushfile_dir_with_deps(self):
         rc, _, _ = self.run_cli("use")
         self.assertEqual(rc, 0)
-        self.assertEqual(self.read("out.txt"), "ok-ran\nok-ran\n")
+        self.assertEqual(self.read("copy.txt"), "ok-ran\n")
 
     def test_failure_stops_and_propagates_status(self):
         rc, _, err = self.run_cli("bad", "after")
