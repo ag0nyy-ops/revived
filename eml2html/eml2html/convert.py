@@ -30,3 +30,27 @@ def body_html(msg):
     if t is not None:
         return text_to_html(t)
     return ""
+
+
+_CID = re.compile(r"""(["'(])cid:([^"')\s]+)""", re.I)
+
+
+def inline_cids(body, msg):
+    """Replace cid: references with data URIs built from related parts."""
+    parts = {}
+    for part in msg.walk():
+        cid = part.get("Content-ID")
+        if cid and not part.is_multipart():
+            data = part.get_payload(decode=True)
+            if data is not None:
+                parts[cid.strip().strip("<>")] = (part.get_content_type(), data)
+
+    def repl(m):
+        hit = parts.get(m.group(2))
+        if not hit:
+            return m.group(0)
+        ctype, data = hit
+        return "%sdata:%s;base64,%s" % (
+            m.group(1), ctype, base64.b64encode(data).decode("ascii"))
+
+    return _CID.sub(repl, body)
