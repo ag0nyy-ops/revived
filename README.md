@@ -15,3 +15,7 @@ Each folder is a from-scratch rewrite of a tool that was archived, deprecated or
 ## Layout
 
 Every tool lives in its own folder with its own README (where it came from, why it died, what changed, how to install) and its own tests.
+
+## Spin-outs
+
+Twice a week, `.github/workflows/spinout.yml` gives one finished tool its own repo. A tool only moves out once it passes the gate in `.github/spinout/spinout.py`: it has a real entry point, it builds, at least 5 tests pass, `--help` runs, its README credits the original and shows it in use, and no repo already has its name or rebuilds the same original. The new repo keeps the folder's commit history and ships a `v0.1.0` pre-release with prebuilt binaries.

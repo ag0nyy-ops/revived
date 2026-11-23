@@ -1,0 +1,67 @@
+name: spin out
+
+# Twice a week, give one finished rebuild its own repo and a v0.1.0 pre-release.
+# The gate (see .github/spinout/spinout.py) decides which tool is ready.
+on:
+  schedule:
+    # Monday and Thursday, noon Chicago during CST (UTC-6).
+    - cron: '0 18 * * 1'
+    - cron: '0 18 * * 4'
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: folder to spin out (blank picks the oldest tool that passes the gate)
+        required: false
+        default: ''
+      dry_run:
+        description: only run the gate and report, create nothing
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spinout
+  cancel-in-progress: false
+
+jobs:
+  spinout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GIT_AUTHOR_NAME: Jaymz
+      GIT_AUTHOR_EMAIL: 253701092+ag0nyy-ops@users.noreply.github.com
+      GIT_COMMITTER_NAME: Jaymz
+      GIT_COMMITTER_EMAIL: 253701092+ag0nyy-ops@users.noreply.github.com
+      SPINOUT_TOKEN: ${{ secrets.SPINOUT_TOKEN }}
+      GH_TOKEN: ${{ secrets.SPINOUT_TOKEN || github.token }}
+      TOOL: ${{ inputs.tool }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: check the token
+        run: |
+          if [ -z "$SPINOUT_TOKEN" ] && [ "$DRY_RUN" != "true" ]; then
+            echo "::error::Add a SPINOUT_TOKEN secret (fine-grained token with Administration, Contents and Workflows read/write) before spin-outs can create repos."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: spin out the next ready tool
+        run: |
+          args=(--owner "${{ github.repository_owner }}")
+          [ -n "$TOOL" ] && args+=(--tool "$TOOL")
+          [ "$DRY_RUN" = "true" ] && args+=(--dry-run)
+          python3 .github/spinout/spinout.py "${args[@]}"
