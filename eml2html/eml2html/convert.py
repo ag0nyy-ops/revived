@@ -54,3 +54,18 @@ def inline_cids(body, msg):
             m.group(1), ctype, base64.b64encode(data).decode("ascii"))
 
     return _CID.sub(repl, body)
+
+
+HEADER_FIELDS = ("From", "To", "Cc", "Date", "Subject")
+
+
+def header_block(msg):
+    rows = []
+    for name in HEADER_FIELDS:
+        value = msg.get(name)
+        if value:
+            rows.append("<tr><th align=\"left\">%s</th><td>%s</td></tr>"
+                        % (name, html.escape(str(value))))
+    if not rows:
+        return ""
+    return "<table class=\"eml-headers\">" + "".join(rows) + "</table><hr>"
