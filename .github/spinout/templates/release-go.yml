@@ -1,0 +1,42 @@
+name: release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: tag of the release to build for
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test ./...
+      - name: build and package
+        run: |
+          mkdir -p dist
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do
+            os="${target%/*}"; arch="${target#*/}"
+            name="__BIN__-$TAG-$os-$arch"
+            ext=""; [ "$os" = windows ] && ext=".exe"
+            mkdir -p "dist/$name"
+            CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w -X main.version=$TAG" -o "dist/$name/__BIN__$ext" __MAIN__
+            cp README.md LICENSE "dist/$name/"
+            if [ "$os" = windows ]; then (cd dist && zip -qr "$name.zip" "$name"); else tar czf "dist/$name.tar.gz" -C dist "$name"; fi
+            rm -rf "dist/$name"
+          done
+      - run: gh release upload "$TAG" dist/* --clobber
