@@ -60,7 +60,7 @@ func (e *Env) Eval(src string) (float64, error) {
 }
 
 func (p *parser) peek() token { return p.toks[p.i] }
-func (p *parser) next() token  { t := p.toks[p.i]; p.i++; return t }
+func (p *parser) next() token { t := p.toks[p.i]; p.i++; return t }
 
 func (p *parser) isOp(s string) bool {
 	t := p.peek()

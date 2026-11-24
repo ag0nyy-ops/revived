@@ -19,9 +19,9 @@ func f2(f func(a, b float64) float64) function {
 
 var functions = map[string]function{
 	"sin": f1(math.Sin), "cos": f1(math.Cos), "tan": f1(math.Tan),
-	"cot": f1(func(x float64) float64 { return 1 / math.Tan(x) }),
-	"sec": f1(func(x float64) float64 { return 1 / math.Cos(x) }),
-	"csc": f1(func(x float64) float64 { return 1 / math.Sin(x) }),
+	"cot":  f1(func(x float64) float64 { return 1 / math.Tan(x) }),
+	"sec":  f1(func(x float64) float64 { return 1 / math.Cos(x) }),
+	"csc":  f1(func(x float64) float64 { return 1 / math.Sin(x) }),
 	"asin": f1(math.Asin), "acos": f1(math.Acos), "atan": f1(math.Atan),
 	"acot": f1(func(x float64) float64 { return math.Atan(1 / x) }),
 	"asec": f1(func(x float64) float64 { return math.Acos(1 / x) }),
