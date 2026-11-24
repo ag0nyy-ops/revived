@@ -11,6 +11,7 @@ Each folder is a from-scratch rewrite of a tool that was archived, deprecated or
 | [chglog](chglog/) | [git-chglog/git-chglog](https://github.com/git-chglog/git-chglog) (Go, MIT, deprecated) | zero-config, auto next version (`--bump`), graph-correct release grouping, revert cancelling, monorepo tags and paths, JSON output, zero deps |
 | [spark](spark/) | [holman/spark](https://github.com/holman/spark) (bash, MIT, unmaintained since 2015) | rust rewrite: negatives and leading zeros, fair scaling, gaps for missing data, `--min/--max`, `--log`, multi-row charts, ascii fallback, color, `--width`, `--stats` |
 | [rush](rush/) | [rednafi/rush](https://github.com/rednafi/rush) (Python, MIT, archived 2020) | zero dependencies, explicit `@task` dependencies with cycle detection, line-numbered parse errors, real exit codes, `--dry-run`, `--list --view`, utf-8 safe |
+| [gohttpbench](gohttpbench/) | [parkghost/gohttpbench](https://github.com/parkghost/gohttpbench) (Go, MIT, archived 2023) | stdlib only, sub-millisecond latencies, partial report on Ctrl-C, `-d` duration mode, `--json`, categorised failures, real exit codes |
 
 ## Layout
 
