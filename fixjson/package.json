@@ -1,0 +1,10 @@
+{
+  "name": "fixjson",
+  "version": "0.1.0",
+  "description": "Convert FIX protocol messages to JSON or YAML and back",
+  "type": "module",
+  "bin": { "fixjson": "bin/fixjson.js" },
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/" },
+  "license": "MIT"
+}
