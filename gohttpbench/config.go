@@ -57,7 +57,7 @@ func parseArgs(args []string, stderr io.Writer) (*Config, error) {
 	fs.DurationVar(&c.Timeout, "t", 30*time.Second, "per-request timeout")
 	fs.BoolVar(&c.KeepAlive, "k", false, "use HTTP keep-alive")
 	fs.BoolVar(&c.Gzip, "z", false, "ask for gzip responses")
-	fs.BoolVar(&c.ContinueOnError, "r", false, "keep going when requests fail (default: stop after the first error burst)")
+	fs.BoolVar(&c.ContinueOnError, "r", false, "keep going after connection errors (default: stop at the first one)")
 	fs.BoolVar(&head, "i", false, "use HEAD instead of GET")
 	fs.Var(&headers, "H", "extra header, e.g. 'Accept: text/html' (repeatable)")
 	fs.Var(&cookies, "C", "cookie, e.g. 'session=1234' (repeatable)")
