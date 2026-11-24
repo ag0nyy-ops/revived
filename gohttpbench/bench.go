@@ -139,7 +139,7 @@ func Run(ctx context.Context, c *Config, progress func(done int)) ([]Result, tim
 					return
 				}
 				r := doOne(runCtx, client, c, &expected)
-				if runCtx.Err() != nil && r.Fail != FailNone && r.Status == 0 {
+				if runCtx.Err() != nil && r.Fail != FailNone {
 					return // cut off by cancellation; not a real failure
 				}
 				mu.Lock()
