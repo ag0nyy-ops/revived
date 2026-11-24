@@ -49,7 +49,7 @@ func runContext(parent context.Context, args []string, stdout, stderr io.Writer)
 	}
 
 	results, elapsed := Run(ctx, c, progress)
-	interrupted := parent.Err() == nil && ctx.Err() != nil && !(c.Duration > 0 && elapsed >= c.Duration)
+	interrupted := ctx.Err() != nil
 	s := Summarize(results, elapsed)
 	if c.JSON {
 		if err := writeJSON(stdout, s, interrupted); err != nil {
