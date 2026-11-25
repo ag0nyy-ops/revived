@@ -1,0 +1,10 @@
+{
+  "name": "joblint",
+  "version": "1.0.0",
+  "description": "Lint tech job posts for biased wording, culture red flags, unrealistic expectations and recruiter fails",
+  "type": "module",
+  "bin": { "joblint": "bin/joblint.js" },
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/" },
+  "license": "MIT"
+}
