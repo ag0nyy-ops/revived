@@ -5,7 +5,7 @@ at-rules (@media, @supports, ...), comments, strings and url() values.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class CssError(ValueError):
