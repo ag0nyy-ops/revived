@@ -222,7 +222,9 @@ def check_readme(p: Project, path: Path) -> None:
     if not p.original:
         raise GateFail("README doesn't link the original project")
     blocks = re.findall(r"```[^\n]*\n(.*?)```", readme, re.S)
-    if not any(re.search(rf"(^|[\s$>]){re.escape(p.bin)}\b", b, re.M) for b in blocks):
+    # indented code blocks count too
+    blocks.append("\n".join(l.strip() for l in readme.splitlines() if l.startswith(("    ", "\t"))))
+    if not any(re.search(rf"(^|[\s$>/]){re.escape(p.bin)}\b", b, re.M) for b in blocks):
         raise GateFail(f"README has no code block that runs `{p.bin}`")
 
 
@@ -258,7 +260,8 @@ def gate(p: Project, path: Path, scratch: Path) -> int:
     elif p.kind == "node":
         run(["npm", "ci" if p.extra["lock"] else "install", "--no-audit", "--no-fund"], cwd=path)
         out = run(["npm", "test"], cwd=path).stdout
-        tests = max(count(r"^# pass (\d+)", out), count(r"Tests:.*?(\d+) passed", out),
+        tests = max(count(r"^# pass (\d+)", out), count(r"^\S* ?pass (\d+)$", out),
+                    count(r"Tests:.*?(\d+) passed", out),
                     count(r"(\d+) passing", out))
         binary = None
     else:
@@ -347,9 +350,9 @@ def fix_go_module(p: Project, repo: Path, owner: str) -> None:
     if not old or old == new:
         return
     changed = []
-    for f in [repo / "go.mod", *repo.rglob("*.go")]:
+    for f in [repo / "go.mod", repo / "README.md", *repo.rglob("*.go")]:
         text = f.read_text(encoding="utf-8")
-        updated = re.sub(rf'(?<![\w/.-]){re.escape(old)}(?=["/\s]|$)', new, text, flags=re.M)
+        updated = re.sub(rf'(?<![\w/.-]){re.escape(old)}(?=["/\s@`]|$)', new, text, flags=re.M)
         if updated != text:
             f.write_text(updated, encoding="utf-8")
             changed.append(str(f.relative_to(repo)))
