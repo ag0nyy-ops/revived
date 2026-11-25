@@ -1,0 +1,15 @@
+{
+  "salt": "change-me",
+  "rules": [
+    { "column": "email", "action": "hash" },
+    { "column": "postcode", "action": "outcode" },
+    { "column": "born", "action": "year", "format": "YYYY-MM-DD" },
+    { "column": "card", "action": "mask", "keep": 4 },
+    { "column": "ip", "action": "ip" },
+    { "column": "income", "action": "range", "ranges": [
+      { "lt": 30000, "output": "<30k" },
+      { "gte": 30000, "lt": 80000, "output": "30k-80k" },
+      { "gte": 80000, "output": "80k+" }
+    ] }
+  ]
+}
