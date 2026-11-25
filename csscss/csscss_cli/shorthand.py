@@ -1,7 +1,7 @@
 """Expand box shorthands so `margin: 0 auto` matches `margin-left: auto`."""
 from __future__ import annotations
 
-from .parser import Declaration, _split_top
+from .parser import Declaration
 
 SIDES = ("top", "right", "bottom", "left")
 
