@@ -1,0 +1,3 @@
+id,email,postcode,born,card,ip,income
+1,ann@example.com,W1W 8BE,1990-02-03,4111111111111111,192.168.4.77,52000
+2,bob@example.com,M1 1AE,1985-11-30,5500005555555559,10.0.0.9,91000
