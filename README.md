@@ -13,6 +13,7 @@ Each folder is a from-scratch rewrite of a tool that was archived, deprecated or
 | [rush](rush/) | [rednafi/rush](https://github.com/rednafi/rush) (Python, MIT, archived 2020) | zero dependencies, explicit `@task` dependencies with cycle detection, line-numbered parse errors, real exit codes, `--dry-run`, `--list --view`, utf-8 safe |
 | [fixjson](fixjson/) | [SunGard-Labs/fix2json](https://github.com/SunGard-Labs/fix2json) (JavaScript, MIT, archived 2023) | zero dependencies, optional bundled or custom dictionaries, header/body/trailer output, repeating groups, `--validate`, JSON/JSONL/YAML, JSON back to FIX |
 | [anon](anon/) | [intenthq/anon](https://github.com/intenthq/anon) (Go, MIT, archived 2019) | zero dependencies, header and named columns, pass-through columns, stable salted HMAC hashing, `mask`/`redact`/`ip`/`date` actions, line and column errors, deterministic sampling |
+| [calc](calc/) | [alfredxing/calc](https://github.com/alfredxing/calc) (Go, MIT, archived 2023) | zero dependencies, real grammar (`-2^2`, right-assoc `^`), implicit multiplication, variables and `ans`/`@` history, more functions and `!`, column-numbered errors, works with pipes |
 
 ## Layout
 
