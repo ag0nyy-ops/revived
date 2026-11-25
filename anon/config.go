@@ -77,7 +77,7 @@ type Config struct {
 
 func (c *Config) HasHeader() bool { return c.Header == nil || *c.Header }
 
-func LoadConfig(path string) (*Config, error) {
+func LoadConfig(path, envSalt string) (*Config, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -88,6 +88,9 @@ func LoadConfig(path string) (*Config, error) {
 	var c Config
 	if err := dec.Decode(&c); err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	if c.Salt == "" {
+		c.Salt = envSalt
 	}
 	if err := c.validate(); err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
