@@ -51,7 +51,5 @@ def expand(decl: Declaration) -> list:
 
 
 def expand_all(decls: list) -> list:
-    out = []
-    for d in decls:
-        out.extend(expand(d))
-    return out
+    """Expand shorthands; returns (source property, declaration) pairs."""
+    return [(d.prop, e) for d in decls for e in expand(d)]

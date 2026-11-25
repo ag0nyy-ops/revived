@@ -14,7 +14,7 @@ def _where(rs) -> str:
 def to_text(matches: list, verbose: bool = False) -> str:
     lines = []
     for m in matches:
-        n = len(m.shared)
+        n = m.count
         note = " [same selector]" if m.same_selector else ""
         lines.append(f"{_where(m.a)} and {_where(m.b)} share {n} rule{'s' if n != 1 else ''}{note}")
         if verbose:
@@ -29,5 +29,5 @@ def _rs(rs) -> dict:
 
 def to_json(matches: list) -> str:
     data = [{"a": _rs(m.a), "b": _rs(m.b), "same_selector": m.same_selector,
-             "count": len(m.shared), "shared": m.shared} for m in matches]
+             "count": m.count, "shared": m.shared} for m in matches]
     return json.dumps(data, indent=2)
