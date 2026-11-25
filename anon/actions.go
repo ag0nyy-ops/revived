@@ -167,11 +167,8 @@ func ipAction(s string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("%q is not an IP address", s)
 	}
-	bits := 24
-	if a.Is6() && !a.Is4In6() {
-		bits = 48
-	}
 	a = a.Unmap()
+	bits := 48
 	if a.Is4() {
 		bits = 24
 	}
