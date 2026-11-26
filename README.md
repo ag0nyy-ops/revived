@@ -15,6 +15,7 @@ Each folder is a from-scratch rewrite of a tool that was archived, deprecated or
 | [anon](anon/) | [intenthq/anon](https://github.com/intenthq/anon) (Go, MIT, archived 2019) | zero dependencies, header and named columns, pass-through columns, stable salted HMAC hashing, `mask`/`redact`/`ip`/`date` actions, line and column errors, deterministic sampling |
 | [calc](calc/) | [alfredxing/calc](https://github.com/alfredxing/calc) (Go, MIT, archived 2023) | zero dependencies, real grammar (`-2^2`, right-assoc `^`), implicit multiplication, variables and `ans`/`@` history, more functions and `!`, column-numbered errors, works with pipes |
 | [gohttpbench](gohttpbench/) | [parkghost/gohttpbench](https://github.com/parkghost/gohttpbench) (Go, MIT, archived 2023) | stdlib only, sub-millisecond latencies, partial report on Ctrl-C, `-d` duration mode, `--json`, categorised failures, real exit codes |
+| [backoff](backoff/) | [litl/backoff](https://github.com/litl/backoff) (Python, MIT, archived 2025) | typed and zero dependencies, hard `max_time` deadline, monotonic clock, injectable sleep and global disable, works on static/class methods, async handlers, rich `Details` in hooks |
 
 ## Layout
 
