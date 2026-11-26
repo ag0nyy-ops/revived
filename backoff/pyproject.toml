@@ -1,0 +1,18 @@
+[project]
+name = "backoff-revived"
+version = "0.1.0"
+description = "Typed, dependency-free retry decorators with backoff for sync and async code"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+backoff = ["py.typed"]
